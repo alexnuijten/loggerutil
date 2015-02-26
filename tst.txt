@@ -1,3 +1,4 @@
 Dit is een demo voor git
 Laten we hier nog eens wat bij zetten, gewoon omdat het kan
 asjemenou,.. dat dat ken
+het zou natuurlijk zomaar kunnen dat ik lokaal een wijziging maak, maar dat dit ook al online gebeurd is.
