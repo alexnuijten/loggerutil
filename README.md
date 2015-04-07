@@ -1,4 +1,3 @@
-@@ -1,7 +1,41 @@
 # loggerutil
 - [What is LoggerUtil?](#what-is-loggerutil)
 - [License](#license)
