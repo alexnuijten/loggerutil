@@ -1,4 +1,4 @@
-create or replace package generator_pkg is
+create or replace package loggerutil is
    --==
    --== Generate a Template for a given 
    --== procedure or function.
@@ -21,15 +21,15 @@ create or replace package generator_pkg is
    --==   * set serveroutput on
    --==
    --== Usage
-   --==   exec generator_pkg.template ('package.procedure')
+   --==   exec loggerutil.template ('package.procedure')
    --==   or
-   --==   exec generator_pkg.template ('package.function')
+   --==   exec loggerutil.template ('package.function')
    --==
    --== 2015-02-26: Alex Nuijten  Initial Creation
    
-   procedure template (p_procedure   in varchar2
-                      ,p_standalone  in boolean := false
+   procedure template (p_procedure  in varchar2
+                      ,p_standalone in boolean := false
                       );
 
-end generator_pkg;
+end loggerutil;
 /

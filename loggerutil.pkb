@@ -1,4 +1,4 @@
-create or replace package body generator_pkg is
+create or replace package body loggerutil is
    --==============================--
    --== Private Global Variables ==--
    --==============================--
@@ -203,5 +203,5 @@ create or replace package body generator_pkg is
 --============================--
 begin
    null;
-end generator_pkg;
+end loggerutil;
 /
