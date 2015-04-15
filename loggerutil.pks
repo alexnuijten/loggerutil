@@ -26,10 +26,12 @@ create or replace package loggerutil is
    --==   exec loggerutil.template ('package.function')
    --==
    --== 2015-02-26: Alex Nuijten  Initial Creation
-   
-   procedure template (p_procedure  in varchar2
-                      ,p_standalone in boolean := false
-                      );
+   --== 2015-04-10: Alex Nuijten  Renamed pacakge to loggerutil
+   --== 2015-04-15: Alex Nuijten  Parse custom layout for template
+   --==                           removed p_standalone argument
+
+   procedure template (p_procedure  in varchar2);
 
 end loggerutil;
 /
+show error

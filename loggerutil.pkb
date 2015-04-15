@@ -3,7 +3,61 @@ create or replace package body loggerutil is
    --== Private Global Variables ==--
    --==============================--
    g_package constant varchar2(31) := $$plsql_unit || '.';
-   type g_columns_tt is table of user_tab_cols%rowtype;
+
+   type argument_signature is record
+      (position number --Position 0 returns the values for the return type of a function.
+      ,lvl      number --If the argument is a composite type, such as record, then this parameter returns the level of the datatype
+      ,argname  varchar2(30)-- Name of the argument
+      -- 0: IN
+      -- 1: OUT
+      -- 2: IN OUT
+      ,inout    number
+      );
+   type argument_signatures is table of argument_signature
+      index by pls_integer;
+   type stored_procs is table of argument_signatures
+      index by pls_integer; -- overlading number
+
+   g_proc_template varchar2(32767) :=
+   '   is
+      l_scope  constant varchar2(61) := g_package||''#procname#'';
+      l_params logger.tab_param;
+      /* #docarguments# */
+   begin
+      #logarguments#
+      logger.log_information (p_text    => ''Start''
+                             ,p_scope   => l_scope
+                             ,p_params  => l_params
+                             );
+      [==> TODO: Actual Program goes here ==]
+      logger.log_information (p_text    => ''End''
+                             ,p_scope   => l_scope
+                             );
+   end #procname#;';
+
+   g_func_template varchar2(32767) := 
+   '   is
+      l_scope  constant varchar2(61) := g_package||''#procname#'';
+      l_params logger.tab_param;
+      l_retval TODO;
+      /*
+       #docarguments#
+      */
+   begin
+      #logarguments#
+      logger.log_information(p_text    => ''Start''
+                            ,p_scope   => l_scope
+                            ,p_params  => l_params
+                            );
+      [==> TODO: Actual Program goes here ==]
+      logger.log_information(p_text  => ''Return Value: ''|| l_retval
+                            ,p_scope => l_scope
+                            );
+      logger.log_information(p_text  => ''End''
+                            ,p_scope => l_scope
+                            );
+      return l_retval;
+   end #procname#;';
 
    --======================--
    --== Private Programs ==--
@@ -11,191 +65,331 @@ create or replace package body loggerutil is
    procedure pl (p_text in varchar2)
    is
    begin
-      dbms_output.put_line(p_text);
+      if p_text is not null
+      then
+         dbms_output.put_line(p_text);
+      end if;
    end pl;
-   --==
-   procedure log_parameter(p_arg_name in varchar2) is
-      l_arg_name varchar2(150) := lower(p_arg_name);
-   begin
-     pl('      logger.append_param (p_params => l_params'||
-        ', p_name => '''||l_arg_name||''''||
-        ', p_val => '||l_arg_name||
-        ');'
-        );
-   end log_parameter;
-   --==
 
-   function determine_proc_func (p_procedure in varchar2)
+   --==
+   procedure pl (p_text1 in varchar2, p_text2 in varchar2)
+   is
+   begin
+      pl (p_text1||': '||p_text2);   
+   end pl;
+
+   --==
+   procedure show (p_args in argument_signatures)
+   is
+      l_idx pls_integer;
+   begin
+      l_idx := p_args.first;
+      while l_idx is not null
+      loop
+            pl('position: '||p_args(l_idx).position||', '||
+               'level: '||p_args(l_idx).lvl      ||', '||
+               'argumentname: '||p_args(l_idx).argname||', '||
+               'inout: '||p_args(l_idx).inout);
+         l_idx := p_args.next (l_idx);
+      end loop;
+   end show;
+
+   --==
+   procedure show (p in stored_procs)
+   is
+      l_idx pls_integer;
+   begin
+      l_idx := p.first;
+      while l_idx is not null
+      loop
+         pl ('*** overloading: '||l_idx);
+         show (p_args => p(l_idx));
+         l_idx := p.next (l_idx);
+      end loop;
+   end show;
+
+   --==
+   function p_f (p_proc_type in varchar2)
+      return varchar2
+   is
+   begin
+      return case p_proc_type
+             when 'P' then 'Procedure'
+             when 'F' then 'Function'
+             end;
+   end p_f;
+
+   --==
+   function get_template (p_proc_type in varchar2)
+      return varchar2
+   is
+      l_retval varchar2 (32767);
+   begin
+      l_retval := logger.get_pref (p_pref_name => case p_proc_type
+                                                  when 'P'
+                                                  then 'PROCEDURE_TEMPLATE'
+                                                  when 'F'
+                                                  then 'FUNCTION_TEMPLATE'
+                                                  end);
+
+      if l_retval is null
+      then
+         l_retval := case p_proc_type
+                     when 'P'
+                     then g_proc_template
+                     when 'F'
+                     then g_func_template
+                     end;
+      end if;
+      return l_retval;
+   end get_template;
+
+   --==
+   function parse_template (p_template in varchar2)
+      return dbms_utility.lname_array
+   is
+      l_cnt    pls_integer;
+      l_line   varchar2(4000);
+      l_retval dbms_utility.lname_array;
+   begin
+       -- Move the Template text to an Array of Stings
+      l_cnt := regexp_count (rtrim (p_template, chr(10))||chr(10), chr(10));
+      for i in 1.. l_cnt
+      loop
+         l_line := regexp_substr (p_template, '[^'||chr(10)||']+', 1, i);
+         l_retval (l_retval.count + 1) := l_line;
+       end loop;
+      return l_retval;
+   end parse_template;   
+
+   --==
+   function determine_proc_func (p_procedure in argument_signatures)
       return varchar2
    is
       l_retval varchar2(1);
-      l_package   varchar2(30);
-      l_procedure varchar2(30);
    begin
-      l_package := upper (substr (p_procedure, 1, instr (p_procedure, '.')-1));
-      l_procedure := upper (substr (p_procedure, instr (p_procedure, '.') + 1));
-      select 'F'
-        into l_retval
-        from user_arguments
-       where package_name = l_package
-         and object_name = l_procedure
-         and argument_name is null
-         and in_out = 'OUT'; -- only functions have a NULL argument_name type OUT
+      begin
+         if p_procedure(0).position = 0
+         then
+            l_retval := 'F';
+         end if;
+      exception
+         when no_data_found
+         then
+            l_retval := 'P';
+      end;
       return l_retval;
-   exception
-      when no_data_found
-      then
-         l_retval := 'P';
-         return l_retval;
-      when too_many_rows
-      then
-         l_retval := 'F';
-         return l_retval;
    end determine_proc_func;
-   
+
    --==
-   procedure log_parameters(p_procedure in varchar2) is
-      overl  dbms_describe.number_table;
-      posn  dbms_describe.number_table;
-      levl  dbms_describe.number_table;
-      arg   dbms_describe.varchar2_table;
-      dtyp  dbms_describe.number_table;
-      defv  dbms_describe.number_table;
-      inout dbms_describe.number_table;
-      len   dbms_describe.number_table;
-      prec  dbms_describe.number_table;
-      scal  dbms_describe.number_table;
-      n     dbms_describe.number_table;
+   procedure format_logparameter (p_replace_line in varchar2
+                                 ,p_arg_name     in varchar2
+                                 )
+   is
+      l_arg_name varchar2(150) := lower(p_arg_name);
+      new_line   varchar2(4000);
    begin
-      dbms_describe.describe_procedure(object_name                => p_procedure
-                                      ,reserved1                  => null
-                                      ,reserved2                  => null
-                                      ,overload                   => overl
-                                      ,position                   => posn
-                                      ,level                      => levl
-                                      ,argument_name              => arg
-                                      ,datatype                   => dtyp
-                                      ,default_value              => defv
-                                      ,in_out                     => inout
-                                      ,length                     => len
-                                      ,precision                  => prec
-                                      ,scale                      => scal
-                                      ,radix                      => n
-                                      ,spare                      => n
-                                      ,include_string_constraints => false);
-      for i in 1 .. overl.count
+      new_line := replace (p_replace_line
+                          ,'#logarguments#'
+                          ,'logger.append_param (p_params => l_params'||
+                           ', p_name => '''||l_arg_name||''''||
+                           ', p_val => '||l_arg_name||');'
+                          );
+     pl(new_line);    
+   end format_logparameter;
+
+   --==
+   procedure format_docparameter (p_replace_line in varchar2
+                                 ,p_arg_name     in varchar2
+                                 ,p_arg_type     in number
+                                 )
+   is
+      l_arg_name varchar2(150) := lower(p_arg_name);
+      new_line   varchar2(4000);
+   begin
+      new_line := replace (p_replace_line
+                          ,'#docarguments#'
+                          ,l_arg_name||
+                           case 
+                              when p_arg_type = 0 then ' in '
+                              -- when p_arg_type = 1 and p_arg_name is null then ' returns'
+                              when p_arg_type = 1 then ' out '
+                              when p_arg_type = 2 then ' in/out '
+                           end 
+                          );
+     pl(new_line);
+   end format_docparameter;
+
+   --==
+   procedure log_parameters (p_replace_line in varchar2
+                            ,p_arguments    in argument_signatures
+                            )
+   is
+      l_idx pls_integer;
+   begin
+      l_idx := p_arguments.first;
+      while l_idx is not null
       loop
-         begin
-            if overl(i) <> overl(i - 1)
-            then
-               -- Show if it concerns an Overloading
-               -- Making it easier to pick the correct template
-               pl('********************');
-               pl('** Overloading: ' || to_char(overl(i)) ||
-                                    ' **');
-               pl('********************');
-            end if;
-         exception
-            when no_data_found then
-               null;
-         end;
-         if inout(i) <> 1
-            and levl(i) = 0
+         if p_arguments(l_idx).inout <> 1
+            and p_arguments(l_idx).position <> 0
          then
             -- Only for IN or IN/OUT arguments are
             -- added to the logger
-            -- In case the level is greater than 0
-            -- it is a RECORD of TABLE type
-            -- For this type we will only show
-            -- the number of entries
-            log_parameter(p_arg_name => arg(i));
+            format_logparameter (p_replace_line => p_replace_line
+                                ,p_arg_name     => p_arguments(l_idx).argname
+                                );
          end if;
+         l_idx := p_arguments.next (l_idx);
       end loop;
    end log_parameters;
+
    --==
-   
-   procedure proc (p_procedure  in varchar2
-                  ,p_standalone in boolean
-                  )
+   procedure doc_parameters (p_replace_line in varchar2
+                            ,p_arguments    in argument_signatures
+                            )
    is
-      l_procedure varchar2(255) := substr (p_procedure, instr (p_procedure, '.') + 1);
+      l_idx pls_integer;
    begin
-      pl ('   is');
-      if p_standalone
-      then
-         pl ('      l_scope  constant varchar2(61) := '''||l_procedure||''';');
-      else
-         pl ('      l_scope  constant varchar2(61) := g_package||'''||l_procedure||''';');
-      end if;
-      pl ('      l_params logger.tab_param;');
-      pl ('   begin');
-      log_parameters (p_procedure => p_procedure);
-      pl ('      logger.log_information (p_text    => ''Start''');
-      pl ('                             ,p_scope   => l_scope');
-      pl ('                             ,p_params  => l_params');
-      pl ('                             );');
-      pl ('      [==> Actual Program goes here ==]');
-      pl ('      logger.log_information (p_text    => ''End''');
-      pl ('                             ,p_scope   => l_scope');
-      pl ('                             );');
-      pl ('   end '||l_procedure||';');
-   end proc;
+      l_idx := p_arguments.first;
+      while l_idx is not null
+      loop
+         -- all arguments are show in #docarguments#
+         -- except the return clause from a function
+         if p_arguments(l_idx).position <> 0
+         then
+            format_docparameter (p_replace_line => p_replace_line
+                                ,p_arg_name => p_arguments(l_idx).argname
+                                ,p_arg_type => p_arguments(l_idx).inout
+                                );
+         end if;
+         l_idx := p_arguments.next (l_idx);
+      end loop;
+   end doc_parameters;
+
    --==
-   
-   procedure func (p_procedure in varchar2
-                  ,p_standalone in boolean
-                  )
+   procedure process (p_procedure in varchar2
+                     ,p_signature in argument_signatures
+                     ,p_proc_type in varchar2
+                     )
    is
-      l_procedure varchar2(255) := substr (p_procedure, instr (p_procedure, '.') + 1);
+      l_template_tt dbms_utility.lname_array;
+      l_arguments   argument_signatures;
+      l_line        varchar2 (4000);
+      l_idx         pls_integer;
+      l_proc_name   varchar2(255) := substr (p_procedure, instr (p_procedure, '.') + 1);
    begin
-      pl ('   is');
-      if p_standalone
-      then
-         pl ('      l_scope  constant varchar2(61) := '''||l_procedure||''';');
-      else
-         pl ('      l_scope  constant varchar2(61) := g_package||'''||l_procedure||''';');
-      end if;
-      pl ('      l_params logger.tab_param;');
-      pl ('      l_retval ;');
-      pl ('   begin');
-      log_parameters (p_procedure => p_procedure);
-      pl ('      logger.log_information(p_text    => ''Start''');
-      pl ('                            ,p_scope   => l_scope');
-      pl ('                            ,p_params  => l_params');
-      pl ('                            );');
-      pl ('      [==> Actual Program goes here ==]');
-      pl ('      logger.log_information(p_text  => ''Return Value: ''|| l_retval ');
-      pl ('                            ,p_scope => l_scope');
-      pl ('                            );');
-      pl ('      logger.log_information(p_text  => ''End''');
-      pl ('                            ,p_scope => l_scope');
-      pl ('                            );');
-      pl ('      return l_retval;');
-      pl ('   end '||l_procedure||';');
-   end func;
+      -- Retrieve the Template and create a collection
+      -- of individual lines of it
+      l_template_tt := parse_template (p_template => get_template (p_proc_type => p_proc_type));
+      -- Determine all the argument for the given procedure
+      l_arguments := p_signature;
+      -- Process the Template Array
+      -- Don't replace the #placeholders# in the Template Array
+      -- but replace them in the actual output
+      l_idx := l_template_tt.first;
+      while l_idx is not null
+      loop
+         l_line := l_template_tt(l_idx);
+         if instr (l_template_tt (l_idx), '#procname#') > 0
+         then
+            l_line := replace (l_template_tt (l_idx), '#procname#', l_proc_name);
+         end if;
+         if instr (l_template_tt (l_idx), '#docarguments#')> 0
+         then
+            doc_parameters (p_replace_line => l_line
+                           ,p_arguments    => l_arguments
+                           );
+            l_line := null; -- replace has been taken care of in called procedure
+         end if;
+         if instr (l_template_tt (l_idx), '#logarguments#')> 0
+         then
+            log_parameters (p_replace_line => l_line
+                           ,p_arguments    => l_arguments
+                           );
+            l_line := null; -- replace has been taken care of in called procedure
+         end if;
+         pl (l_line);
+         l_idx := l_template_tt.next (l_idx);
+      end loop;
+   end process;
+
+   --
+   function describe (p_procedure in varchar2)
+      return stored_procs
+   is
+      overl    dbms_describe.number_table;
+      posn     dbms_describe.number_table;
+      levl     dbms_describe.number_table;
+      arg      dbms_describe.varchar2_table;
+      dtyp     dbms_describe.number_table;
+      defv     dbms_describe.number_table;
+      inout    dbms_describe.number_table;
+      len      dbms_describe.number_table;
+      prec     dbms_describe.number_table;
+      scal     dbms_describe.number_table;
+      n        dbms_describe.number_table;
+      --
+      l_retval stored_procs;
+   begin
+      dbms_describe.describe_procedure (object_name                => p_procedure
+                                       ,reserved1                  => null
+                                       ,reserved2                  => null
+                                       ,overload                   => overl
+                                       --Position 0 returns the values for the return type of a function.
+                                       ,position                   => posn
+                                       --If the argument is a composite type, such as record, then this parameter returns the level of the datatype
+                                       ,level                      => levl
+                                       ,argument_name              => arg
+                                       ,datatype                   => dtyp
+                                       ,default_value              => defv
+                                       ,in_out                     => inout
+                                       ,length                     => len
+                                       ,precision                  => prec
+                                       ,scale                      => scal
+                                       ,radix                      => n
+                                       ,spare                      => n
+                                       ,include_string_constraints => false
+                                       );
+      for i in 1.. overl.count
+      loop
+         l_retval(overl(i))(posn(i)).position := posn(i);
+         l_retval(overl(i))(posn(i)).lvl := levl(i);
+         l_retval(overl(i))(posn(i)).argname := arg(i);
+         l_retval(overl(i))(posn(i)).inout := inout(i);
+      end loop;
+      return l_retval;
+   end describe;
 
    --=====================--
    --== Public Programs ==--
    --=====================--
    --==
-   procedure template (p_procedure  in varchar2
-                      ,p_standalone in boolean := false)
+   procedure template (p_procedure  in varchar2)
    is
       l_proc_type varchar2(1);
+      l_procs     stored_procs;
+      l_overl_idx pls_integer;
    begin
-      l_proc_type := determine_proc_func (p_procedure => p_procedure);
-      case l_proc_type 
-         when 'P'
+      l_procs := describe (p_procedure => p_procedure);
+      l_overl_idx := l_procs.first;
+      while l_overl_idx is not null
+      loop
+         -- per overloading determine determine_proc_func
+         l_proc_type := determine_proc_func (l_procs(l_overl_idx));
+         if l_overl_idx > 0
          then
-            proc (p_procedure  => p_procedure
-                 ,p_standalone => p_standalone
+            pl ('##################');
+            pl ('### Overloading', to_char (l_overl_idx));
+            pl ('### Type       ', p_f(l_proc_type));
+            pl ('##################');
+         end if;
+         -- per overloading generate the correct template
+         process (p_procedure => p_procedure
+                 ,p_signature => l_procs (l_overl_idx)
+                 ,p_proc_type => l_proc_type
                  );
-         when 'F'
-         then
-            func (p_procedure  => p_procedure
-                 ,p_standalone => p_standalone
-                 );
-      end case;
+         l_overl_idx := l_procs.next(l_overl_idx);
+      end loop;
    end template;
    
 --============================--
@@ -205,3 +399,4 @@ begin
    null;
 end loggerutil;
 /
+show error
