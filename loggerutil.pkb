@@ -22,7 +22,9 @@ create or replace package body loggerutil is
    '   is
       l_scope  constant varchar2(61) := g_package||''#procname#'';
       l_params logger.tab_param;
-      /* #docarguments# */
+      /*
+      #docarguments# TODO
+      */
    begin
       #logarguments#
       logger.log_information (p_text    => ''Start''
@@ -35,13 +37,13 @@ create or replace package body loggerutil is
                              );
    end #procname#;';
 
-   g_func_template varchar2(32767) := 
+   g_func_template varchar2(32767) :=
    '   is
       l_scope  constant varchar2(61) := g_package||''#procname#'';
       l_params logger.tab_param;
       l_retval TODO;
       /*
-       #docarguments#
+      #docarguments# TODO
       */
    begin
       #logarguments#
@@ -75,7 +77,7 @@ create or replace package body loggerutil is
    procedure pl (p_text1 in varchar2, p_text2 in varchar2)
    is
    begin
-      pl (p_text1||': '||p_text2);   
+      pl (p_text1||': '||p_text2);
    end pl;
 
    --==
@@ -109,7 +111,7 @@ create or replace package body loggerutil is
    end show;
 
    --==
-   function p_f (p_proc_type in varchar2)
+   function pf (p_proc_type in varchar2)
       return varchar2
    is
    begin
@@ -117,7 +119,7 @@ create or replace package body loggerutil is
              when 'P' then 'Procedure'
              when 'F' then 'Function'
              end;
-   end p_f;
+   end pf;
 
    --==
    function get_template (p_proc_type in varchar2)
@@ -160,7 +162,7 @@ create or replace package body loggerutil is
          l_retval (l_retval.count + 1) := l_line;
        end loop;
       return l_retval;
-   end parse_template;   
+   end parse_template;
 
    --==
    function determine_proc_func (p_procedure in argument_signatures)
@@ -195,7 +197,7 @@ create or replace package body loggerutil is
                            ', p_name => '''||l_arg_name||''''||
                            ', p_val => '||l_arg_name||');'
                           );
-     pl(new_line);    
+     pl(new_line);
    end format_logparameter;
 
    --==
@@ -210,12 +212,12 @@ create or replace package body loggerutil is
       new_line := replace (p_replace_line
                           ,'#docarguments#'
                           ,l_arg_name||
-                           case 
+                           case
                               when p_arg_type = 0 then ' in '
                               -- when p_arg_type = 1 and p_arg_name is null then ' returns'
                               when p_arg_type = 1 then ' out '
                               when p_arg_type = 2 then ' in/out '
-                           end 
+                           end
                           );
      pl(new_line);
    end format_docparameter;
@@ -380,7 +382,7 @@ create or replace package body loggerutil is
          then
             pl ('##################');
             pl ('### Overloading', to_char (l_overl_idx));
-            pl ('### Type       ', p_f(l_proc_type));
+            pl ('### Type       ', pf (l_proc_type));
             pl ('##################');
          end if;
          -- per overloading generate the correct template
@@ -391,7 +393,7 @@ create or replace package body loggerutil is
          l_overl_idx := l_procs.next(l_overl_idx);
       end loop;
    end template;
-   
+
 --============================--
 --== Initialization Section ==--
 --============================--

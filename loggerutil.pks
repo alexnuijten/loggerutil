@@ -1,6 +1,6 @@
 create or replace package loggerutil is
    --==
-   --== Generate a Template for a given 
+   --== Generate a Template for a given
    --== procedure or function.
    --== The template will include references
    --== to LOGGER
@@ -18,7 +18,7 @@ create or replace package loggerutil is
    --==
    --==   Template depends on DBMS_OTUPUT, therefore
    --==   Serveroutput needs to be turned on
-   --==   * set serveroutput on
+   --==   * set serveroutput on format wrapped
    --==
    --== Usage
    --==   exec loggerutil.template ('package.procedure')
