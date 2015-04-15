@@ -1,13 +1,14 @@
 # loggerutil
 - [What is LoggerUtil?](#what-is-loggerutil)
-- [How do I use LoggerUtil?](#)
-- [Why am I not seeing any output?](#)
-- [Why is the signature missing?](#)
-- [Why is the datatype for the return variable not generated?](#)
-- [Why are my empty lines removed from the template?](#)
-- [Can I specify a Custom Template for my Procedure/Function?](#)
-- [How do I reset the Template back to the default?](#)
-- [Which placeholders can I use and What do they do?](#)
+- [How do I use LoggerUtil?](#how-do-i-use-loggerutil)
+- [Why am I not seeing any output?](#why-am-i-not-seeing-any-output)
+- [Why is the signature missing?](#why-is-the-signature-of-the-procedurefunction-missing)
+- [Why is the datatype for the return variable not generated?](#why-is-the-datatype-for-the-return-variable-not-generated)
+- [Why are my empty lines removed from the template?](#why-are-my-empty-lines-removed-from-the-template)
+- [Can I specify a Custom Template for my Procedure/Function?](#can-i-specify-a-custom-template-for-my-procedurefunction)
+- [How do I reset the Template back to the default?](#how-do-i-reset-the-template-back-to-the-default)
+- [Which placeholders can I use and What do they do?](#which-placeholders-can-i-use-and-what-do-they-do)
+- [Feedback/Issues](#feedbackissues)
 - [License](#license)
 
 # What is LoggerUtil?
@@ -31,13 +32,16 @@ For instance when you use %TYPE (datatype anchored to the table columns), the da
 Because you just created the signature of the stored procedure anyway, simply copy it to the package body. Generate the template and paste this in the package body as well.
 
 # Why is the datatype for the return variable not generated?
-see # Why is the signature of the Procedure/Function missing?
+see -[Why is the signature of the Procedure/Function missing?](#why-is-the-signature-of-the-procedurefunction-missing)
 
 # Why are my empty lines removed from the template?
+Mainly because I don't like empty lines in source code, it just makes the text longer and I don't like scrolling.
 
 # Can I specify a Custom Template for my Procedure/Function?
+-- TODO
 
 # How do I reset the Template back to the default?
+--TODO
 
 # Which placeholders can I use and What do they do?
 Placeholder    |Meaning
