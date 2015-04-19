@@ -8,7 +8,7 @@
 - [Can I specify a Custom Template for my Procedure/Function?](#can-i-specify-a-custom-template-for-my-procedurefunction)
 - [How do I reset the Template back to the default?](#how-do-i-reset-the-template-back-to-the-default)
 - [Which placeholders can I use and What do they do?](#which-placeholders-can-i-use-and-what-do-they-do)
-- [Does LoggerUtil support complex datatypes to generate the logggin for?](#does-loggerutil-support-complex-datatypes-to-generate)
+- [Does LoggerUtil support complex datatypes to generate the logging for?](#does-loggerutil-support-complex-datatypes-to-generate-the-logging-for)
 - [Feedback/Issues](#feedbackissues)
 - [License](#license)
 
