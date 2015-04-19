@@ -38,10 +38,14 @@ see -[Why is the signature of the Procedure/Function missing?](#why-is-the-signa
 Mainly because I don't like empty lines in source code, it just makes the text longer and I don't like scrolling.
 
 # Can I specify a Custom Template for my Procedure/Function?
--- TODO
+The only way to do that (for now) is to change the variables in the package body named:
+```sql
+ g_proc_template
+ g_func_template
+ ```
 
 # How do I reset the Template back to the default?
---TODO
+Currently there is no way to do this. In a future release this will be supported.
 
 # Which placeholders can I use and What do they do?
 Placeholder    |Meaning
