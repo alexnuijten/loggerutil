@@ -8,6 +8,7 @@
 - [Can I specify a Custom Template for my Procedure/Function?](#can-i-specify-a-custom-template-for-my-procedurefunction)
 - [How do I reset the Template back to the default?](#how-do-i-reset-the-template-back-to-the-default)
 - [Which placeholders can I use and What do they do?](#which-placeholders-can-i-use-and-what-do-they-do)
+- [Does LoggerUtil support complex datatypes to generate the logggin for?](#does-loggerutil-support-complex-datatypes-to-generate)
 - [Feedback/Issues](#feedbackissues)
 - [License](#license)
 
@@ -54,6 +55,9 @@ Placeholder    |Meaning
 #docarguments# |All the arguments are listed (IN, OUT and IN/OUT). Handy for when you want to use this in the comments section.
                |The text (or spaces) before the placeholder is placed before each argument.
 #logarguments# |Only the IN and IN/OUT arguments are used for calls to Logger.
+
+# Does LoggerUtil support complex datatypes to generate the logggin for?
+No, LoggerUtil doesn't generate Logger code for complex datatypes like Objects, Nested Tables, Varrays or Associative Arrays.
 
 ##Feedback/Issues
 Please submit any feedback, suggestions, or issues on the project's [issue page](https://github.com/alexnuijten/loggerutil/issues).
