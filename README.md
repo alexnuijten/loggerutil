@@ -53,7 +53,7 @@ Placeholder    |Meaning
 ---------------|-------
 #procname#     |The name of the procedure or function.
 #docarguments# |All the arguments are listed (IN, OUT and IN/OUT). Handy for when you want to use this in the comments section.
-               |The text (or spaces) before the placeholder is placed before each argument.
+               The text (or spaces) before the placeholder is placed before each argument.
 #logarguments# |Only the IN and IN/OUT arguments are used for calls to Logger.
 
 # Does LoggerUtil support complex datatypes to generate the logggin for?
