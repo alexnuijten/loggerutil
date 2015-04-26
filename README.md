@@ -17,7 +17,7 @@ The LoggerUtil project contains a PL/SQL package to supplement LOGGER (https://g
 
 loggerutil.template:
    generates a Procedure or Function body including instrumentation using the LOGGER
-   package. This template will log all IN and IN/OUT arguments. See comments in 
+   package. This template will log all IN and IN/OUT arguments. See comments in
    package specification for more information.
 
 # How do I use LoggerUtil?
@@ -39,14 +39,28 @@ see -[Why is the signature of the Procedure/Function missing?](#why-is-the-signa
 Mainly because I don't like empty lines in source code, it just makes the text longer and I don't like scrolling.
 
 # Can I specify a Custom Template for my Procedure/Function?
-The only way to do that (for now) is to change the variables in the package body named:
+Use ```sql set_custom_template ``` to enter your custom template for either a procedure (type is P) or function (type is F).
+For example:
 ```sql
- g_proc_template
- g_func_template
- ```
+loggerutil.set_custom_template (p_type     => 'P'
+                               ,p_template => 'your_custom_template'
+                               );
+```
+In your custom template you can use  [placeholders(#which-placeholders-can-i-use-and-what-do-they-do)].
+Note: This depends on Issue #103 being implemented in Logger.
+
 
 # How do I reset the Template back to the default?
-Currently there is no way to do this. In a future release this will be supported.
+The function ```sql reset_default_templates ``` will remove the custom templates that are stored in the LOGGER_PREFS table.
+```sql
+loggerutil.reset_default_templates;
+```
+Alternatively you can use
+```sql
+logger.set_cust_pref ('CUST_FUNCTION_TEMPLATE', null);
+logger.set_cust_pref ('CUST_PROCEDURE_TEMPLATE', null);
+```
+Note: This depends on Issue #103 being implemented in Logger.
 
 # Which placeholders can I use and What do they do?
 Placeholder    |Meaning
