@@ -39,14 +39,14 @@ see -[Why is the signature of the Procedure/Function missing?](#why-is-the-signa
 Mainly because I don't like empty lines in source code, it just makes the text longer and I don't like scrolling.
 
 # Can I specify a Custom Template for my Procedure/Function?
-Use ```sql set_custom_template ``` to enter your custom template for either a procedure (type is P) or function (type is F).
+Use ``` set_custom_template ``` to enter your custom template for either a procedure (type is P) or function (type is F).
 For example:
 ```sql
 loggerutil.set_custom_template (p_type     => 'P'
                                ,p_template => 'your_custom_template'
                                );
 ```
-In your custom template you can use  [placeholders(#which-placeholders-can-i-use-and-what-do-they-do)].
+In your custom template you can use  [placeholders](#which-placeholders-can-i-use-and-what-do-they-do).
 Note: This depends on Issue #103 being implemented in Logger.
 
 
