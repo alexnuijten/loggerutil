@@ -51,7 +51,7 @@ Note: This depends on Issue #103 being implemented in Logger.
 
 
 # How do I reset the Template back to the default?
-The function ```sql reset_default_templates ``` will remove the custom templates that are stored in the LOGGER_PREFS table.
+The function ``` reset_default_templates ``` will remove the custom templates that are stored in the LOGGER_PREFS table.
 ```sql
 loggerutil.reset_default_templates;
 ```
@@ -69,7 +69,7 @@ Placeholder    |Meaning
 #docarguments# |All the arguments are listed (IN, OUT and IN/OUT). Handy for when you want to use this in the comments section. The text (or spaces) before the placeholder is placed before each argument.
 #logarguments# |Only the IN and IN/OUT arguments are used for calls to Logger.
 
-# Does LoggerUtil support complex datatypes to generate the logggin for?
+# Does LoggerUtil support complex datatypes to generate the logging for?
 No, LoggerUtil doesn't generate Logger code for complex datatypes like Objects, Nested Tables, Varrays or Associative Arrays.
 
 ##Feedback/Issues
