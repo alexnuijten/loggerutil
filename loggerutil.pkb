@@ -61,6 +61,9 @@ create or replace package body loggerutil is
       return l_retval;
    end #procname#;';
 
+   g_cust_pref_function  logger_prefs.pref_name%type := 'CUST_FUNCTION_TEMPLATE';
+   g_cust_pref_procedure logger_prefs.pref_name%type := 'CUST_PROCEDURE_TEMPLATE';
+
    --======================--
    --== Private Programs ==--
    --======================--
@@ -129,9 +132,9 @@ create or replace package body loggerutil is
    begin
       l_retval := logger.get_pref (p_pref_name => case p_proc_type
                                                   when 'P'
-                                                  then 'PROCEDURE_TEMPLATE'
+                                                  then g_cust_pref_procedure
                                                   when 'F'
-                                                  then 'FUNCTION_TEMPLATE'
+                                                  then g_cust_pref_function
                                                   end);
 
       if l_retval is null
@@ -393,6 +396,42 @@ create or replace package body loggerutil is
          l_overl_idx := l_procs.next(l_overl_idx);
       end loop;
    end template;
+
+   --==
+   procedure reset_default_templates
+   is
+   begin
+      logger.set_cust_pref (p_pref_name => g_cust_pref_function
+                           ,p_pref_value => null
+                           );
+      logger.set_cust_pref (p_pref_name => g_cust_pref_procedure
+                           ,p_pref_value => null
+                           );
+   end reset_default_templates;
+
+   --==
+   procedure set_custom_template (p_type     in varchar2 -- P or F
+                                 ,p_template in varchar2
+                                 )
+   is
+   begin
+      case upper (p_type)
+      when 'P'
+      then
+         logger.set_cust_pref (p_pref_name => g_cust_pref_procedure
+                              ,p_pref_value => p_template
+                              );
+      when 'F'
+      then
+         logger.set_cust_pref (p_pref_name => g_cust_pref_function
+                              ,p_pref_value => p_template
+                              );
+      end case;
+   exception
+      when case_not_found
+      then
+         raise_application_error (-20000, 'Type must be "P" or "F"');
+   end set_custom_template;
 
 --============================--
 --== Initialization Section ==--

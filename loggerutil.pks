@@ -29,8 +29,17 @@ create or replace package loggerutil is
    --== 2015-04-10: Alex Nuijten  Renamed pacakge to loggerutil
    --== 2015-04-15: Alex Nuijten  Parse custom layout for template
    --==                           removed p_standalone argument
+   --== 2015-04-26: Alex Nuijten  Added procedures to set/reset
+   --==                           Custom Templates.
+   --==                           Dependency: Issue #103 must be implemented in Logger
 
-   procedure template (p_procedure  in varchar2);
+
+   procedure template (p_procedure in varchar2);
+
+   procedure reset_default_templates;
+   procedure set_custom_template (p_type     in varchar2 -- P or F
+                                 ,p_template in varchar2
+                                 );
 
 end loggerutil;
 /
