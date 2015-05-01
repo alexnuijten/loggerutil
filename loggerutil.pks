@@ -10,14 +10,14 @@ create or replace package loggerutil is
    --==   to be available, i.e. it needs to be in the package
    --==   specification. It can't be a private.
    --==
+   --==   When using the default templates:
    --==   The package where the procedure is going to
    --==   be placed will need to have a global constant:
    --==   * g_package constant varchar2(31) := $$plsql_unit || '.';
-   --==   If it concerns a standalone procedure (not in a package)
-   --==   then pass in TRUE for p_standalone
    --==
    --==   Template depends on DBMS_OTUPUT, therefore
    --==   Serveroutput needs to be turned on
+   --==   In SQL*Plus:
    --==   * set serveroutput on format wrapped
    --==
    --== Usage
@@ -31,12 +31,20 @@ create or replace package loggerutil is
    --==                           removed p_standalone argument
    --== 2015-04-26: Alex Nuijten  Added procedures to set/reset
    --==                           Custom Templates.
-   --==                           Dependency: Issue #103 must be implemented in Logger
-
+   --==                           Dependencies:
+   --==                           Issue #103 must be implemented in Logger
+   --==                           (Logger Version 3.1.0)
+   --== 2015-04-30: Alex Nuijten  Procedures to create/reset custom templates
 
    procedure template (p_procedure in varchar2);
 
+
+   --== Resets the Default Templates to the default setting
    procedure reset_default_templates;
+
+   --== Create a custom template for (P)rocedure or (F)unction
+   --== Currently the template cannot exceed 255 characters, this
+   --== is caused by the limitation of the LOGGER_PREFS table
    procedure set_custom_template (p_type     in varchar2 -- P or F
                                  ,p_template in varchar2
                                  );

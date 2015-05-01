@@ -401,12 +401,8 @@ create or replace package body loggerutil is
    procedure reset_default_templates
    is
    begin
-      logger.set_cust_pref (p_pref_name => g_cust_pref_function
-                           ,p_pref_value => null
-                           );
-      logger.set_cust_pref (p_pref_name => g_cust_pref_procedure
-                           ,p_pref_value => null
-                           );
+      logger.del_cust_pref (p_pref_name => g_cust_pref_function);
+      logger.del_cust_pref (p_pref_name => g_cust_pref_procedure);
    end reset_default_templates;
 
    --==
@@ -415,18 +411,23 @@ create or replace package body loggerutil is
                                  )
    is
    begin
-      case upper (p_type)
-      when 'P'
+      if p_template is not null
       then
-         logger.set_cust_pref (p_pref_name => g_cust_pref_procedure
-                              ,p_pref_value => p_template
-                              );
-      when 'F'
-      then
-         logger.set_cust_pref (p_pref_name => g_cust_pref_function
-                              ,p_pref_value => p_template
-                              );
-      end case;
+         case upper (p_type)
+         when 'P'
+         then
+            logger.set_cust_pref (p_pref_name => g_cust_pref_procedure
+                                 ,p_pref_value => p_template
+                                 );
+         when 'F'
+         then
+            logger.set_cust_pref (p_pref_name => g_cust_pref_function
+                                 ,p_pref_value => p_template
+                                 );
+         end case;
+      else
+         raise_application_error (-20000, 'Custom Template cannot be NULL');
+      end if;
    exception
       when case_not_found
       then

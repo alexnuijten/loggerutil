@@ -1,9 +1,11 @@
 # loggerutil
 - [What is LoggerUtil?](#what-is-loggerutil)
+- [How to install LoggerUtil?](#how-to-install-loggerutil)
 - [How do I use LoggerUtil?](#how-do-i-use-loggerutil)
 - [Why am I not seeing any output?](#why-am-i-not-seeing-any-output)
 - [Why is the signature missing?](#why-is-the-signature-of-the-procedurefunction-missing)
 - [Why is the datatype for the return variable not generated?](#why-is-the-datatype-for-the-return-variable-not-generated)
+- [Can I generate a template based on a procedure in another schema?](#can-i-generate-a-template-based-on-a-procedure-in-another-schema)
 - [Why are my empty lines removed from the template?](#why-are-my-empty-lines-removed-from-the-template)
 - [Can I specify a Custom Template for my Procedure/Function?](#can-i-specify-a-custom-template-for-my-procedurefunction)
 - [How do I reset the Template back to the default?](#how-do-i-reset-the-template-back-to-the-default)
@@ -20,6 +22,13 @@ loggerutil.template:
    package. This template will log all IN and IN/OUT arguments. See comments in
    package specification for more information.
 
+# How to install Loggerutil?
+Make sure that the current directory is the one where all the files for loggerutil are located.
+In the database schema where you want to install loggerutil, run the install script:
+```sql
+@install.sql
+```
+
 # How do I use LoggerUtil?
 Please refer to this blog for a simple example: http://nuijten.blogspot.nl/2015/04/speed-up-development-with-logger.html
 # Why am I not seeing any output?
@@ -34,6 +43,9 @@ Because you just created the signature of the stored procedure anyway, simply co
 
 # Why is the datatype for the return variable not generated?
 see -[Why is the signature of the Procedure/Function missing?](#why-is-the-signature-of-the-procedurefunction-missing)
+
+# Can I generate a template based on a procedure in another schema?
+As long as you can describe the procedure you can generate a template for it.
 
 # Why are my empty lines removed from the template?
 Mainly because I don't like empty lines in source code, it just makes the text longer and I don't like scrolling.
