@@ -12,6 +12,7 @@ create or replace package body loggerutil is
       -- 1: OUT
       -- 2: IN OUT
       ,inout    number
+      ,dty      number
       );
    type argument_signatures is table of argument_signature
       index by pls_integer;
@@ -61,8 +62,10 @@ create or replace package body loggerutil is
       return l_retval;
    end #procname#;';
 
-   g_cust_pref_function  logger_prefs.pref_name%type := 'CUST_FUNCTION_TEMPLATE';
-   g_cust_pref_procedure logger_prefs.pref_name%type := 'CUST_PROCEDURE_TEMPLATE';
+   g_pref_type               logger_prefs.pref_type%type := 'LOGGERUTIL';
+   g_pref_function_template  logger_prefs.pref_name%type := 'FUNCTION_TEMPLATE';
+   g_pref_procedure_template logger_prefs.pref_name%type := 'PROCEDURE_TEMPLATE';
+
 
    --======================--
    --== Private Programs ==--
@@ -94,7 +97,9 @@ create or replace package body loggerutil is
             pl('position: '||p_args(l_idx).position||', '||
                'level: '||p_args(l_idx).lvl      ||', '||
                'argumentname: '||p_args(l_idx).argname||', '||
-               'inout: '||p_args(l_idx).inout);
+               'inout: '||p_args(l_idx).inout||', '||
+               'dty: '||p_args(l_idx).dty
+               );
          l_idx := p_args.next (l_idx);
       end loop;
    end show;
@@ -130,11 +135,12 @@ create or replace package body loggerutil is
    is
       l_retval varchar2 (32767);
    begin
-      l_retval := logger.get_pref (p_pref_name => case p_proc_type
+      l_retval := logger.get_pref (p_pref_type => g_pref_type
+                                  ,p_pref_name => case p_proc_type
                                                   when 'P'
-                                                  then g_cust_pref_procedure
+                                                  then g_pref_procedure_template
                                                   when 'F'
-                                                  then g_cust_pref_function
+                                                  then g_pref_function_template
                                                   end);
 
       if l_retval is null
@@ -258,6 +264,7 @@ create or replace package body loggerutil is
       l_idx := p_arguments.first;
       while l_idx is not null
       loop
+-- show (p_arguments);
          -- all arguments are show in #docarguments#
          -- except the return clause from a function
          if p_arguments(l_idx).position <> 0
@@ -335,6 +342,7 @@ create or replace package body loggerutil is
       n        dbms_describe.number_table;
       --
       l_retval stored_procs;
+l_idx pls_integer;
    begin
       dbms_describe.describe_procedure (object_name                => p_procedure
                                        ,reserved1                  => null
@@ -355,12 +363,39 @@ create or replace package body loggerutil is
                                        ,spare                      => n
                                        ,include_string_constraints => false
                                        );
+-- pl('**** Positions ****');
+-- l_idx := posn.first;
+-- while l_idx is not null
+-- loop
+--    pl(l_idx);
+--    l_idx := posn.next (l_idx);
+-- end loop;
+-- pl('**** Levels ****');
+--    l_idx := levl.first;
+--    while l_idx is not null
+--    loop
+--       pl(l_idx);
+--       l_idx := levl.next (l_idx);
+--    end loop;
+  -- pl ('*** overl: '||to_char (overl.count));
+  -- pl ('*** posn : '||to_char (posn .count));
+  -- pl ('*** levl : '||to_char (levl .count));
+  -- pl ('*** arg  : '||to_char (arg  .count));
+  -- pl ('*** dtyp : '||to_char (dtyp .count));
+  -- pl ('*** defv : '||to_char (defv .count));
+  -- pl ('*** inout: '||to_char (inout.count));
+  -- pl ('*** len  : '||to_char (len  .count));
+  -- pl ('*** prec : '||to_char (prec .count));
+  -- pl ('*** scal : '||to_char (scal .count));
+  -- pl ('*** n    : '||to_char (n    .count));
+
       for i in 1.. overl.count
       loop
          l_retval(overl(i))(posn(i)).position := posn(i);
          l_retval(overl(i))(posn(i)).lvl := levl(i);
          l_retval(overl(i))(posn(i)).argname := arg(i);
          l_retval(overl(i))(posn(i)).inout := inout(i);
+         l_retval(overl(i))(posn(i)).dty := dtyp(i);
       end loop;
       return l_retval;
    end describe;
@@ -400,9 +435,15 @@ create or replace package body loggerutil is
    --==
    procedure reset_default_templates
    is
+      pragma autonomous_transaction;
    begin
-      logger.del_cust_pref (p_pref_name => g_cust_pref_function);
-      logger.del_cust_pref (p_pref_name => g_cust_pref_procedure);
+      logger.del_pref (p_pref_type => g_pref_type
+                      ,p_pref_name => g_pref_function_template
+                      );
+      logger.del_pref (p_pref_type => g_pref_type
+                      ,p_pref_name => g_pref_procedure_template
+                      );
+      commit;
    end reset_default_templates;
 
    --==
@@ -410,27 +451,33 @@ create or replace package body loggerutil is
                                  ,p_template in varchar2
                                  )
    is
+      pragma autonomous_transaction;
    begin
       if p_template is not null
       then
          case upper (p_type)
          when 'P'
          then
-            logger.set_cust_pref (p_pref_name => g_cust_pref_procedure
-                                 ,p_pref_value => p_template
-                                 );
+            logger.set_pref (p_pref_type  => g_pref_type
+                            ,p_pref_name  => g_pref_procedure_template
+                            ,p_pref_value => p_template
+                            );
          when 'F'
          then
-            logger.set_cust_pref (p_pref_name => g_cust_pref_function
-                                 ,p_pref_value => p_template
-                                 );
+            logger.set_pref (p_pref_type  => g_pref_type
+                            ,p_pref_name  => g_pref_function_template
+                            ,p_pref_value => p_template
+                            );
          end case;
       else
+         rollback;
          raise_application_error (-20000, 'Custom Template cannot be NULL');
       end if;
+      commit;
    exception
       when case_not_found
       then
+         rollback;
          raise_application_error (-20000, 'Type must be "P" or "F"');
    end set_custom_template;
 
