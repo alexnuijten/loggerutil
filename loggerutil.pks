@@ -35,6 +35,7 @@ create or replace package loggerutil is
    --==                           Issue #103 must be implemented in Logger
    --==                           (Logger Version 3.1.0)
    --== 2015-04-30: Alex Nuijten  Procedures to create/reset custom templates
+   --== 2016-10-25: Alex Nuijten  Set and Reset Client Info Procedures
 
    procedure template (p_procedure in varchar2);
 
@@ -48,6 +49,17 @@ create or replace package loggerutil is
    procedure set_custom_template (p_type     in varchar2 -- P or F
                                  ,p_template in varchar2
                                  );
+
+   --== When multiple developers use the same DB-schema
+   --== to develop a common code base, logger data from one
+   --== developer will quickly intermingle with other developer
+   --== logger data making it difficult to determine the data of interest
+   --== Using the set_client_info procedure allows you to set a specific
+   --== name in the logger table, making it easier to keep track of your data
+   procedure set_client_info (p_client_info in varchar2);
+   --== The reset_client_info procedure will restore the client info
+   --== to the original value
+   procedure reset_client_info;
 
 end loggerutil;
 /

@@ -4,6 +4,8 @@ create or replace package body loggerutil is
    --==============================--
    g_package constant varchar2(31) := $$plsql_unit || '.';
 
+   g_client_info varchar2 (30) := sys_context ('userenv', 'client_info');
+
    type argument_signature is record
       (position number --Position 0 returns the values for the return type of a function.
       ,lvl      number --If the argument is a composite type, such as record, then this parameter returns the level of the datatype
@@ -480,6 +482,21 @@ l_idx pls_integer;
          rollback;
          raise_application_error (-20000, 'Type must be "P" or "F"');
    end set_custom_template;
+
+   --==
+   procedure set_client_info (p_client_info in varchar2)
+   is
+   begin
+      g_client_info := sys_context('userenv','client_info');
+      dbms_application_info.set_client_info (p_client_info);
+   end set_client_info;
+
+   --==
+   procedure reset_client_info
+   is
+   begin
+      dbms_application_info.set_client_info (g_client_info);
+   end reset_client_info;
 
 --============================--
 --== Initialization Section ==--
