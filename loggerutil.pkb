@@ -2,14 +2,14 @@ create or replace package body loggerutil is
    --==============================--
    --== Private Global Variables ==--
    --==============================--
-   g_package constant varchar2(31) := $$plsql_unit || '.';
+   g_package constant varchar2(31 char) := $$plsql_unit || '.';
 
-   g_client_info varchar2 (30) := sys_context ('userenv', 'client_info');
+   g_client_info varchar2 (30 char) := sys_context ('userenv', 'client_info');
 
    type argument_signature is record
       (position number --Position 0 returns the values for the return type of a function.
       ,lvl      number --If the argument is a composite type, such as record, then this parameter returns the level of the datatype
-      ,argname  varchar2(30)-- Name of the argument
+      ,argname  varchar2(30 char)-- Name of the argument
       -- 0: IN
       -- 1: OUT
       -- 2: IN OUT
@@ -21,38 +21,51 @@ create or replace package body loggerutil is
    type stored_procs is table of argument_signatures
       index by pls_integer; -- overlading number
 
-   g_proc_template varchar2(32767) :=
+   g_proc_template varchar2(32767 char) :=
    '   is
-      l_scope  constant varchar2(61) := g_package||''#procname#'';
-      l_params logger.tab_param;
-      /*
-      #docarguments# TODO
-      */
+      l_scope  constant varchar2(ora_max_name_len char) := g_package||''#procname#'';
+      function params return logger.tab_param
+      is
+         l_params logger.tab_param;
+      begin
+         #logarguments#
+         return l_params;
+      end params;
    begin
-      #logarguments#
       logger.log_information (p_text    => ''Start''
                              ,p_scope   => l_scope
-                             ,p_params  => l_params
+                             ,p_params  => params ()
                              );
       [==> TODO: Actual Program goes here ==]
       logger.log_information (p_text    => ''End''
                              ,p_scope   => l_scope
                              );
+   exception
+      when others
+      then
+         logger.log_error (p_text   => ''Unexpected Exception''
+                          ,p_scope  => l_scope
+                          ,p_extra  => null
+                          ,p_params => params ()
+                          );
+         raise;
    end #procname#;';
 
-   g_func_template varchar2(32767) :=
+   g_func_template varchar2(32767 char) :=
    '   is
-      l_scope  constant varchar2(61) := g_package||''#procname#'';
-      l_params logger.tab_param;
+      l_scope  constant varchar2(ora_max_name_len char) := g_package||''#procname#'';
       l_retval TODO;
-      /*
-      #docarguments# TODO
-      */
+      function params return logger.tab_param
+      is
+         l_params logger.tab_param;
+      begin
+         #logarguments#
+         return l_params;
+      end params;
    begin
-      #logarguments#
       logger.log_information(p_text    => ''Start''
                             ,p_scope   => l_scope
-                            ,p_params  => l_params
+                            ,p_params  => params ()
                             );
       [==> TODO: Actual Program goes here ==]
       logger.log_information(p_text  => ''Return Value: ''|| l_retval
@@ -62,6 +75,15 @@ create or replace package body loggerutil is
                             ,p_scope => l_scope
                             );
       return l_retval;
+   exception
+      when others
+      then
+         logger.log_error (p_text   => ''Unexpected Exception''
+                          ,p_scope  => l_scope
+                          ,p_extra  => null
+                          ,p_params => params ()
+                          );
+         raise;
    end #procname#;';
 
    g_pref_type               logger_prefs.pref_type%type := 'LOGGERUTIL';
@@ -135,7 +157,7 @@ create or replace package body loggerutil is
    function get_template (p_proc_type in varchar2)
       return varchar2
    is
-      l_retval varchar2 (32767);
+      l_retval varchar2 (32767 char);
    begin
       l_retval := logger.get_pref (p_pref_type => g_pref_type
                                   ,p_pref_name => case p_proc_type
@@ -162,7 +184,7 @@ create or replace package body loggerutil is
       return dbms_utility.lname_array
    is
       l_cnt    pls_integer;
-      l_line   varchar2(4000);
+      l_line   varchar2(4000 char);
       l_retval dbms_utility.lname_array;
    begin
        -- Move the Template text to an Array of Stings
@@ -179,7 +201,7 @@ create or replace package body loggerutil is
    function determine_proc_func (p_procedure in argument_signatures)
       return varchar2
    is
-      l_retval varchar2(1);
+      l_retval varchar2(1 char);
    begin
       begin
          if p_procedure(0).position = 0
@@ -199,8 +221,8 @@ create or replace package body loggerutil is
                                  ,p_arg_name     in varchar2
                                  )
    is
-      l_arg_name varchar2(150) := lower(p_arg_name);
-      new_line   varchar2(4000);
+      l_arg_name varchar2(150 char) := lower(p_arg_name);
+      new_line   varchar2(4000 char);
    begin
       new_line := replace (p_replace_line
                           ,'#logarguments#'
@@ -217,8 +239,8 @@ create or replace package body loggerutil is
                                  ,p_arg_type     in number
                                  )
    is
-      l_arg_name varchar2(150) := lower(p_arg_name);
-      new_line   varchar2(4000);
+      l_arg_name varchar2(150 char) := lower(p_arg_name);
+      new_line   varchar2(4000 char);
    begin
       new_line := replace (p_replace_line
                           ,'#docarguments#'
@@ -288,9 +310,9 @@ create or replace package body loggerutil is
    is
       l_template_tt dbms_utility.lname_array;
       l_arguments   argument_signatures;
-      l_line        varchar2 (4000);
+      l_line        varchar2 (4000 char);
       l_idx         pls_integer;
-      l_proc_name   varchar2(255) := substr (p_procedure, instr (p_procedure, '.') + 1);
+      l_proc_name   varchar2(255 char) := substr (p_procedure, instr (p_procedure, '.') + 1);
    begin
       -- Retrieve the Template and create a collection
       -- of individual lines of it
@@ -344,7 +366,7 @@ create or replace package body loggerutil is
       n        dbms_describe.number_table;
       --
       l_retval stored_procs;
-l_idx pls_integer;
+      l_idx pls_integer;
    begin
       dbms_describe.describe_procedure (object_name                => p_procedure
                                        ,reserved1                  => null
@@ -406,9 +428,9 @@ l_idx pls_integer;
    --== Public Programs ==--
    --=====================--
    --==
-   procedure template (p_procedure  in varchar2)
+   procedure template (p_procedure in varchar2)
    is
-      l_proc_type varchar2(1);
+      l_proc_type varchar2(1 char);
       l_procs     stored_procs;
       l_overl_idx pls_integer;
    begin
